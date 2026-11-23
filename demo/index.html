@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cantos Apple: antes e depois</title>
+<style>
+  :root {
+    --r: 40px;
+    --pad: 16px;
+    --bg: #0b0b0c;
+    --fg: #f2f2f2;
+    --muted: #8a8a8f;
+    --line: #3a3a3e;
+    --accent: #ff6a1a;
+    color-scheme: dark;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); min-height: 100vh; display: grid; place-items: center; }
+  main { width: min(980px, 100% - 32px); padding: 48px 0; }
+  h1 { font-size: clamp(28px, 4vw, 44px); letter-spacing: -0.02em; margin: 0 0 8px; }
+  p.sub { color: var(--muted); margin: 0 0 32px; max-width: 60ch; line-height: 1.5; }
+  .pares { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  figure { margin: 0; }
+  figcaption { margin-top: 14px; font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  figcaption b { color: var(--fg); font-weight: 600; }
+  .fora {
+    border: 2px solid var(--line);
+    border-radius: var(--r);
+    padding: var(--pad);
+    aspect-ratio: 4 / 3;
+    display: grid;
+    place-items: stretch;
+  }
+  .dentro {
+    border: 2px solid var(--fg);
+    display: flex; align-items: center; gap: 12px; padding: 0 20px;
+    font-size: 15px;
+  }
+  .dentro::before { content: ""; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); flex: none; }
+  .antes .dentro { border-radius: var(--r); }
+  .depois .dentro { border-radius: max(calc(var(--r) - var(--pad) - 2px), 4px); border-color: var(--fg); }
+  .depois .fora { border-color: #d9d9d9; }
+  body.squircle .depois .fora, body.squircle .depois .dentro { corner-shape: squircle; }
+  .controles { margin-top: 32px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px 32px; align-items: center; }
+  label { display: grid; gap: 8px; font-size: 14px; color: var(--muted); }
+  input[type=range] { accent-color: var(--accent); width: 100%; }
+  .check { display: flex; gap: 10px; align-items: center; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; color: var(--fg); }
+  .conta { margin-top: 24px; padding: 16px 20px; border: 1px solid var(--line); border-radius: 16px; font-size: 15px; line-height: 1.6; }
+  .aviso { color: var(--muted); font-size: 13px; }
+  @media (max-width: 640px) { .pares { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body class="squircle">
+<main>
+  <h1>Cantos da Apple</h1>
+  <p class="sub">À esquerda, o mesmo raio dentro e fora. À direita, raio de dentro = raio de fora − distância, com cantos contínuos quando o navegador suporta.</p>
+
+  <div class="pares">
+    <figure class="antes">
+      <div class="fora"><div class="dentro">mesmo raio</div></div>
+      <figcaption><b>Antes</b> · <span data-antes></span></figcaption>
+    </figure>
+    <figure class="depois">
+      <div class="fora"><div class="dentro">concêntrico</div></div>
+      <figcaption><b>Depois</b> · <span data-depois></span></figcaption>
+    </figure>
+  </div>
+
+  <div class="controles">
+    <label>Raio de fora: <code data-r></code>
+      <input type="range" min="8" max="80" value="40" data-input="r">
+    </label>
+    <label>Distância (padding): <code data-pad></code>
+      <input type="range" min="0" max="40" value="16" data-input="pad">
+    </label>
+    <label class="check"><input type="checkbox" checked data-input="squircle"><span>Cantos contínuos (<code>corner-shape: squircle</code>)</span></label>
+  </div>
+
+  <div class="conta">
+    <code>raio_de_dentro = max(raio_de_fora − distância, 4px)</code><br>
+    <span data-conta></span><br>
+    <span class="aviso" data-suporte></span>
+  </div>
+</main>
+<script>
+  const root = document.documentElement;
+  const borda = 2;
+  const el = (s) => document.querySelector(s);
+  function atualizar() {
+    const r = +el('[data-input=r]').value;
+    const pad = +el('[data-input=pad]').value;
+    root.style.setProperty('--r', r + 'px');
+    root.style.setProperty('--pad', pad + 'px');
+    const dentro = Math.max(r - pad - borda, 4);
+    el('[data-r]').textContent = r + 'px';
+    el('[data-pad]').textContent = pad + 'px';
+    el('[data-antes]').textContent = r + ' / ' + r;
+    el('[data-depois]').textContent = r + ' / ' + dentro;
+    el('[data-conta]').textContent = `${r} − (${pad} de padding + ${borda} de borda) = ${dentro}px`;
+  }
+  document.querySelectorAll('[data-input=r],[data-input=pad]').forEach(i => i.addEventListener('input', atualizar));
+  el('[data-input=squircle]').addEventListener('change', e => document.body.classList.toggle('squircle', e.target.checked));
+  el('[data-suporte]').textContent = CSS.supports('corner-shape', 'squircle')
+    ? 'Seu navegador desenha cantos contínuos.'
+    : 'Seu navegador ainda não suporta corner-shape (Safari e Firefox): a conta concêntrica continua valendo.';
+  atualizar();
+</script>
+</body>
+</html>
